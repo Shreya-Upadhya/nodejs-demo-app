@@ -1,3 +1,32 @@
+# Task 1: CI/CD Pipeline with GitHub Actions
+
+## 🎯 What I Built
+A complete CI/CD pipeline that automatically tests, builds Docker image, and pushes to Docker Hub whenever code is pushed to the `main` branch.
+
+## 🔄 How My Pipeline Works
+Push to main → Run Tests → Build Docker Image → Push to Docker Hub → Deploy
+
+## 📂 Pipeline Structure (3 Jobs)
+| Job | What it does |
+|-----|---------------|
+| **Test** | Installs dependencies & runs `npm test` |
+| **Build & Push** | Creates Docker image & uploads to Docker Hub |
+| **Deploy** | Simulates deployment (ready for real server) |
+
+## 🔧 Key Concepts I Learned
+
+| Concept | My Understanding |
+|---------|------------------|
+| **CI/CD** | CI = auto test code on push / CD = auto deploy after tests pass |
+| **GitHub Actions** | YAML workflows that run on triggers (push, PR, etc.) |
+| **Runners** | GitHub's servers that execute my workflows |
+| **Jobs vs Steps** | Jobs = group of steps / Steps = individual commands |
+| **Secrets** | Encrypted credentials stored in GitHub Settings |
+| **Docker Build-Push** | `docker build` → `docker login` → `docker push` |
+
+## 🐳 Docker Deployment
+Every push to `main` creates a NEW Docker image and pushes to https://hub.docker.com/repository/docker/slayerass/nodejs-demo-app/latest
+
 ### GitHub Actions Pipeline Success
 <img width="1920" height="682" alt="2026-05-31 (12)" src="https://github.com/user-attachments/assets/ab983ac0-fbb6-4cf7-90e1-e4ee000fd2e7" />
 
