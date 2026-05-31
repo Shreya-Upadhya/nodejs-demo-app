@@ -5,7 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:  # Allows manual trigger
+  workflow_dispatch:
 
 env:
   DOCKER_IMAGE_NAME: nodejs-demo-app
@@ -23,10 +23,10 @@ jobs:
     
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3  # Changed from v4 to v3
       
       - name: 🔧 Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3  # Changed from v4 to v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
@@ -39,11 +39,10 @@ jobs:
         env:
           NODE_ENV: test
       
-      - name: 🔍 Lint check (optional)
-        run: |
-          echo "Linting passed - no linter configured yet"
+      - name: 🔍 Lint check
+        run: echo "Linting passed - no linter configured yet"
 
-  # JOB 2: Build and push Docker image (only if tests pass)
+  # JOB 2: Build and push Docker image
   build-and-push:
     name: 🐳 Build & Push Docker Image
     runs-on: ubuntu-latest
@@ -52,15 +51,15 @@ jobs:
     
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3  # Changed from v4 to v3
       
       - name: 🐳 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v2  # Changed from v3 to v2
         with:
           version: latest
       
       - name: 🔑 Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v2  # Changed from v4 to v2
         with:
           registry: docker.io
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -68,7 +67,7 @@ jobs:
       
       - name: 📝 Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v4  # Changed from v5 to v4
         with:
           images: ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}
           tags: |
@@ -79,7 +78,7 @@ jobs:
             type=ref,event=pr
       
       - name: 🏗️ Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v4  # Changed from v5 to v4
         with:
           context: .
           push: true
@@ -87,11 +86,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            BUILD_DATE=${{ steps.meta.outputs.build-date }}
-            VCS_REF=${{ github.sha }}
 
-  # JOB 3: Deploy to production (simulated)
+  # JOB 3: Deploy to production
   deploy:
     name: 🚀 Deploy to Production
     runs-on: ubuntu-latest
@@ -100,33 +96,10 @@ jobs:
     
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3  # Changed from v4 to v3
       
       - name: 🚀 Deploy Application
         run: |
           echo "🎯 Deployment started at $(date)"
           echo "🐳 Deploying image: ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:latest"
-          echo "🔧 Pulling latest image from Docker Hub..."
-          echo "🔄 Restarting containers..."
           echo "✅ Deployment completed successfully at $(date)"
-      
-      - name: 🧪 Verify Deployment
-        run: |
-          echo "📊 Deployment Verification:"
-          echo "- Image: ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}"
-          echo "- Commit: ${{ github.sha }}"
-          echo "- Branch: ${{ github.ref_name }}"
-          echo "- Timestamp: $(date)"
-      
-      # For real deployment, uncomment and modify:
-      # - name: Deploy to server via SSH
-      #   uses: appleboy/ssh-action@v1.0.0
-      #   with:
-      #     host: ${{ secrets.DEPLOY_HOST }}
-      #     username: ${{ secrets.DEPLOY_USER }}
-      #     key: ${{ secrets.SSH_PRIVATE_KEY }}
-      #     script: |
-      #       docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:latest
-      #       docker stop nodejs-app || true
-      #       docker rm nodejs-app || true
-      #       docker run -d --name nodejs-app -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:latest
