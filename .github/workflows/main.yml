@@ -3,103 +3,37 @@ name: Complete CI/CD Pipeline
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 env:
   DOCKER_IMAGE_NAME: nodejs-demo-app
-  DOCKER_REGISTRY: docker.io
 
 jobs:
-  
-  # JOB 1: Test the application
   test:
-    name: 🧪 Test Application
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [16.x, 18.x, 20.x]
-    
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v3  # Changed from v4 to v3
-      
-      - name: 🔧 Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3  # Changed from v4 to v3
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-      
-      - name: 📦 Install dependencies
-        run: npm ci
-      
-      - name: 🧪 Run tests
-        run: npm test
-        env:
-          NODE_ENV: test
-      
-      - name: 🔍 Lint check
-        run: echo "Linting passed - no linter configured yet"
+          node-version: '18'
+      - run: npm install
+      - run: npm test
 
-  # JOB 2: Build and push Docker image
   build-and-push:
-    name: 🐳 Build & Push Docker Image
     runs-on: ubuntu-latest
-    needs: [test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
+    needs: test
+    if: github.event_name == 'push'
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v3  # Changed from v4 to v3
-      
-      - name: 🐳 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2  # Changed from v3 to v2
-        with:
-          version: latest
-      
-      - name: 🔑 Log in to Docker Hub
-        uses: docker/login-action@v2  # Changed from v4 to v2
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      
-      - name: 📝 Extract metadata
-        id: meta
-        uses: docker/metadata-action@v4  # Changed from v5 to v4
-        with:
-          images: ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest
-            type=sha,prefix={{date 'YYYYMMDD'}}-{{sha}}-
-            type=raw,value={{date 'YYYYMMDD'}}
-            type=ref,event=branch
-            type=ref,event=pr
-      
-      - name: 🏗️ Build and push Docker image
-        uses: docker/build-push-action@v4  # Changed from v5 to v4
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - uses: actions/checkout@v3
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/nodejs-demo-app:latest .
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/nodejs-demo-app:latest
 
-  # JOB 3: Deploy to production
   deploy:
-    name: 🚀 Deploy to Production
     runs-on: ubuntu-latest
-    needs: [build-and-push]
-    if: github.ref == 'refs/heads/main'
-    
+    needs: build-and-push
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v3  # Changed from v4 to v3
-      
-      - name: 🚀 Deploy Application
-        run: |
-          echo "🎯 Deployment started at $(date)"
-          echo "🐳 Deploying image: ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:latest"
-          echo "✅ Deployment completed successfully at $(date)"
+      - run: echo "✅ Deployment successful at $(date)"
