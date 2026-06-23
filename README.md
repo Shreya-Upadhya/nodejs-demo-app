@@ -2,17 +2,6 @@
 This is a Node.js demonstration project designed to understand CI/CD pipeline concepts using GitHub Actions. It's a simple Express server that serves as the artifact for an automated testing, building, and deployment workflow. The project demonstrates how code changes automatically flow through validation, containerization, and deployment stages—no manual intervention required.
 When code is pushed to main, the workflow triggers. The test job installs dependencies and runs npm test. Once tests pass, the build-and-push job builds a Docker image tagged with the latest commit and pushes it to Docker Hub under the slayerass/nodejs-demo-app namespace. The deploy job confirms success. Each job depends on the previous one, ensuring quality gates are met before deployment.
 
-Your code on GitHub
-        ↓
-GitHub Actions runner (Ubuntu VM) executes:
-  1. docker build -t slayerass/nodejs-demo-app:latest .
-     ↑ Creates the image locally on the runner
-  2. docker login (authenticate to Docker Hub)
-  3. docker push slayerass/nodejs-demo-app:latest
-     ↑ Sends that image to Docker Hub
-        ↓
-Docker Hub stores it in your registry
-
 ## 🎯 What I Built
 A complete CI/CD pipeline that automatically tests, builds Docker image, and pushes to Docker Hub whenever code is pushed to the `main` branch.
 
